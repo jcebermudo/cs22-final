@@ -1,5 +1,6 @@
 // https://www.youtube.com/watch?v=tABiMTmS3cQ
-
+import java.io.*;
+import java.net.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -8,12 +9,17 @@ public class PlayerFrame extends JFrame {
     private int width, height;
     private Container contentPane;
     private PlayerSprite me;
+    private PlayerSprite enemy;
     private DrawingComponent dc;
     private Timer animationTimer;
     private boolean up = false;
     private boolean down = false;
     private boolean left = false;
     private boolean right = false;
+    private Socket socket;
+    private int playerID;
+    private ReadFromServer rfsRunnable;
+    private WriteToServer wtsRunnable;
 
     public PlayerFrame(int w, int h) {
         width = w;
@@ -26,7 +32,7 @@ public class PlayerFrame extends JFrame {
 
     public void setUpGUI() {
         contentPane = this.getContentPane();
-        this.setTitle("-----");
+        this.setTitle("----- Player #" + playerID + " -----");
         contentPane.setPreferredSize(new Dimension(width, height));
         createSprites();
         dc = new DrawingComponent();
@@ -40,7 +46,13 @@ public class PlayerFrame extends JFrame {
     }
 
     private void createSprites() {
-        me = new PlayerSprite(100, 400, 50, Color.BLUE);
+        if (playerID == 1) {
+            me = new PlayerSprite(100, 400, 50, Color.BLUE);
+            enemy = new PlayerSprite(490, 400, 50, Color.RED);
+        } else {
+            enemy = new PlayerSprite(100, 400, 50, Color.BLUE);
+            me = new PlayerSprite(490, 400, 50, Color.RED);
+        }
     }
 
     private void setUpAnimationTimer() {
@@ -111,15 +123,99 @@ public class PlayerFrame extends JFrame {
         contentPane.setFocusable(true);
     }
 
+    private void connectToServer() {
+        try {
+            socket = new Socket("localhost", 1000);
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            playerID = in.readInt();
+            System.out.println("You are player #" + playerID);
+            // Show the window as soon as we know player ID.
+            setUpGUI();
+            if (playerID == 1) {
+                System.out.println("Waiting for Player #2 to connect...");
+            }
+            rfsRunnable = new ReadFromServer(in);
+            wtsRunnable = new WriteToServer(out);
+            rfsRunnable.waitForStartMsg();
+        } catch (IOException ex) {
+            System.out.println("IOException from connectToServer()");
+        }
+    }
+
     private class DrawingComponent extends JComponent {
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
+            enemy.drawSprite(g2d);
             me.drawSprite(g2d);
+        }
+    }
+
+    private class ReadFromServer implements Runnable {
+        private DataInputStream dataIn;
+        public ReadFromServer(DataInputStream in) {
+            dataIn = in;
+            System.out.println("RFS Runnable created");
+        }
+
+        public void run() {
+            try {
+                while (true) {
+                    if (enemy != null) {
+                        enemy.setX(dataIn.readDouble());
+                        enemy.setY(dataIn.readDouble());
+                    }
+                }
+            } catch (IOException ex) {
+                System.out.println("IOException from RFS run()");
+            }
+        }
+
+        public void waitForStartMsg() {
+            try {
+                String startMsg = dataIn.readUTF();
+                System.out.println("Message from server: " + startMsg);
+                Thread readThread = new Thread(rfsRunnable);
+                Thread writeThread = new Thread(wtsRunnable);
+                readThread.start();
+                writeThread.start();
+            } catch (IOException ex) {
+                System.out.println("IOException from waitForStartMsg()");
+            }
+        }
+    }
+
+    private class WriteToServer implements Runnable {
+        private DataOutputStream dataOut;
+        public WriteToServer(DataOutputStream out) {
+            dataOut = out;
+            System.out.println("WTS Runnable created");
+        }
+
+        public void run() {
+            try {
+                while (true) {
+                    if (me != null) {
+                    dataOut.writeDouble(me.getX());
+                    dataOut.writeDouble(me.getY());
+                    dataOut.flush();
+                    }
+                    try {
+                        Thread.sleep(25);
+                    } catch (InterruptedException ex) {
+                        System.out.println("InterruptedException from WTS run()");
+                    }
+                }
+            }
+            catch (IOException ex) {
+                System.out.println("IOException from WTS run()");
+            }
         }
     }
 
     public static void main(String[] args) {
         PlayerFrame pf = new PlayerFrame(640,480);
+        pf.connectToServer();
         pf.setUpGUI();
     }
 }
