@@ -3,15 +3,14 @@
 import java.awt.*;
 import java.awt.geom.*;
 
-public class PlayerSprite {
-    private double x, y, size;
+public class Player implements DrawingObject {
+    private double x, y;
+    private boolean aKey, sKey, spaceKey = false;
     private Color color;
 
-    public PlayerSprite(double a, double b, double s, Color c) {
-        x = a;
-        y = b;
-        size = s;
-        color = c;
+    public PlayerSprite(double x, double y) {
+        this.x = x;
+        this.y = y;
     }
 
     public void drawSprite(Graphics2D g2d) {

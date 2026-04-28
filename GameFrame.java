@@ -5,25 +5,24 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public class PlayerFrame extends JFrame {
+public class GameFrame extends JFrame {
     private int width, height;
-    private Container contentPane;
-    private PlayerSprite me;
-    private PlayerSprite enemy;
     private DrawingComponent dc;
     private Timer animationTimer;
-    private boolean up = false;
-    private boolean down = false;
-    private boolean left = false;
-    private boolean right = false;
+    private boolean up
+    private boolean down
+    private boolean left
+    private boolean right
     private Socket socket;
     private int playerID;
     private ReadFromServer rfsRunnable;
     private WriteToServer wtsRunnable;
 
-    public PlayerFrame(int w, int h) {
+    public GameFrame(int w, int h) {
         width = w;
         height = h;
+        frame = new JFrame();
+        gameCanvas = new GameCanvas(w, h)
         up = false;
         down = false;
         left = false;
@@ -31,13 +30,14 @@ public class PlayerFrame extends JFrame {
     }
 
     public void setUpGUI() {
-        contentPane = this.getContentPane();
-        this.setTitle("----- Player #" + playerID + " -----");
+        Container contentPane = frame.getContentPane();
+        contentPane.add(gameCanvas);
+        frame.setTitle("----- Player #" + playerID + " -----");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         contentPane.setPreferredSize(new Dimension(width, height));
         createSprites();
         dc = new DrawingComponent();
         contentPane.add(dc);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.pack();
         this.setVisible(true);
         setUpKeyListener();
