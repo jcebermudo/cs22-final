@@ -4,6 +4,7 @@ import java.net.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.imageio.ImageIO;
 
 public class GameFrame extends JFrame {
     private int width, height;
@@ -18,8 +19,10 @@ public class GameFrame extends JFrame {
     private WriteToServer wtsRunnable;
     private int runCycleIndex = 0;
     private int runCycleTimer = 0;
-    private boolean isJumping = true;
-    private double gravitationalPull = 0.1;
+    private boolean isJumping = false;
+    private double gravitationalPull = 1;
+    private double newSpeed = 0;
+    private int floorHeight = 330;
 
     public GameFrame(int w, int h) {
         width = w;
@@ -44,11 +47,11 @@ public class GameFrame extends JFrame {
 
     private void createSprites() {
         if (playerID == 1) {
-            me = new Player(50, 300);
-            partner = new Player(490, 500);
+            me = new Player(50, floorHeight);
+            partner = new Player(130, floorHeight);
         } else {
-            partner = new Player(100, 500);
-            me = new Player(50, 300);
+            partner = new Player(130, floorHeight);
+            me = new Player(50, floorHeight);
         }
     }
 
@@ -80,7 +83,15 @@ public class GameFrame extends JFrame {
                         runCycleTimer = 0;
                     }
                 }
-
+                if (isJumping) {
+                    newSpeed -= gravitationalPull;
+                    me.moveV(-newSpeed);
+                    if (me.getY() >= floorHeight) {
+                        me.setY(floorHeight);
+                        isJumping = false;
+                        newSpeed = 0;
+                    }
+                }
                 dc.repaint();
             }
         };
@@ -106,6 +117,10 @@ public class GameFrame extends JFrame {
                         break;
                     case KeyEvent.VK_SPACE:
                         me.setBind("space");
+                        if (!isJumping) {
+                            isJumping = true;
+                            newSpeed = 23.5;
+                        }
                         break;
                 }
             }
@@ -153,6 +168,7 @@ public class GameFrame extends JFrame {
     private class DrawingComponent extends JComponent {
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
+            g2d.drawImage(Toolkit.getDefaultToolkit().getImage("bg/bg.png"), 0, 0, 640, 480, null);
             me.draw(g2d);
             partner.draw(g2d);
         }
@@ -171,6 +187,8 @@ public class GameFrame extends JFrame {
                     if (partner != null) {
                         partner.setX(dataIn.readDouble());
                         partner.setY(dataIn.readDouble());
+                        partner.changeRunCycle(dataIn.readInt());
+                        partner.setDirection(dataIn.readInt());
                     }
                 }
             } catch (IOException ex) {
@@ -205,6 +223,8 @@ public class GameFrame extends JFrame {
                     if (me != null) {
                     dataOut.writeDouble(me.getX());
                     dataOut.writeDouble(me.getY());
+                    dataOut.writeInt(me.getCurrentIndex());
+                    dataOut.writeInt(me.getDirection());
                     dataOut.flush();
                     }
                     try {

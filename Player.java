@@ -11,9 +11,12 @@ public class Player implements DrawingObject {
     private boolean aKey, sKey, spaceKey = false;
     private Color color;
     private Image image;
+    private Healthbar healthbar;
     String last_key_pressed = "s";
     private ArrayList<Image> runCycleRight;
     private ArrayList<Image> runCycleLeft;
+    private int currentIndex = 0;
+    private int direction = 1;
 
     public Player(double x, double y) {
         this.x = x;
@@ -29,34 +32,40 @@ public class Player implements DrawingObject {
         runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-2-p.png"));
         runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-3-p.png"));
         runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-4-p.png"));
+        healthbar = new Healthbar((int) x, (int) (y-30));
     }
 
-    boolean isAKeyDown() {
+    public boolean isAKeyDown() {
         return aKey;
     }
 
-    boolean isSKeyDown() {
+    public boolean isSKeyDown() {
         return sKey;
     }
 
     public void draw(Graphics2D g2d) {
-        g2d.drawImage(image, (int) x, (int) y, 120, 120, null);
+        g2d.drawImage(image, (int) x - 36, (int) y, 120, 120, null);
+        healthbar.draw(g2d);
     }
 
     public void moveH(double n) {
         x += n;
+        healthbar.setX((int) x - 36);
     }
 
     public void moveV(double n) {
         y += n;
+        healthbar.setY((int) y - 30);
     }
 
     public void setX(double n) {
         x = n;
+        healthbar.setX((int) x - 36);
     }
 
     public void setY(double n) {
         y = n;
+        healthbar.setY((int) y - 30);
     }
 
     public double getX() {
@@ -99,6 +108,7 @@ public class Player implements DrawingObject {
     }
 
     public void changeRunCycle(int index) {
+        currentIndex = index;
         if (last_key_pressed.equals("a")) {
             image = runCycleLeft.get(index);
         } else if (last_key_pressed.equals("s")) {
@@ -113,6 +123,23 @@ public class Player implements DrawingObject {
             image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/s-1-p-r.png");
         }
     }
-        
+
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+// 0 is right 1 is left
+    public int getDirection() {
+        if (last_key_pressed.equals("a")) {
+            direction = 1;
+        } else if (last_key_pressed.equals("s")) {
+            direction = 0;
+        }
+        return direction;
+    }
+
+    public void setDirection(int d) {
+        direction = d;
+    }
 
 }

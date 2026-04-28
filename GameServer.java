@@ -15,16 +15,21 @@ public class GameServer {
     private WriteToClient p2WriteRunnable;
 
     private double p1x, p1y, p2x, p2y;
+    private int p1CurrentRunCycleIndex, p2CurrentRunCycleIndex;
+    private int p1Direction, p2Direction;
 
     public GameServer() {
         System.out.println("=== GAME SERVER ===");
         numPlayers = 0;
         maxPlayers = 2;
 
-        p1x = 100;
-        p1y = 400;
-        p2x = 490;
-        p2y = 400;
+        p1x = 50;
+        p1y = 330;
+        p2x = 130;
+        p2y = 330;
+
+        p1CurrentRunCycleIndex = 0;
+        p2CurrentRunCycleIndex = 0;
 
         try {
             ss = new ServerSocket(1000);
@@ -92,9 +97,13 @@ public class GameServer {
                     if(playerID == 1) {
                         p1x = dataIn.readDouble();
                         p1y = dataIn.readDouble();
+                        p1CurrentRunCycleIndex = dataIn.readInt();
+                        p1Direction = dataIn.readInt();
                     } else {
                         p2x = dataIn.readDouble();
                         p2y = dataIn.readDouble();
+                        p2CurrentRunCycleIndex = dataIn.readInt();
+                        p2Direction = dataIn.readInt();
                     }
                 }
             } catch (IOException ex) {
@@ -119,9 +128,13 @@ public class GameServer {
                     if (playerID == 1) {
                         dataOut.writeDouble(p2x);
                         dataOut.writeDouble(p2y);
+                        dataOut.writeInt(p2CurrentRunCycleIndex);
+                        dataOut.writeInt(p2Direction);
                     } else {
                         dataOut.writeDouble(p1x);
                         dataOut.writeDouble(p1y);
+                        dataOut.writeInt(p1CurrentRunCycleIndex);
+                        dataOut.writeInt(p1Direction);
                     }
                     dataOut.flush();
                     try {
