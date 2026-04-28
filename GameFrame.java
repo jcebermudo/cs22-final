@@ -7,51 +7,48 @@ import javax.swing.*;
 
 public class GameFrame extends JFrame {
     private int width, height;
+    private GameCanvas gameCanvas;
     private DrawingComponent dc;
     private Timer animationTimer;
-    private boolean up
-    private boolean down
-    private boolean left
-    private boolean right
+    private Player me;
+    private Player partner;
     private Socket socket;
     private int playerID;
     private ReadFromServer rfsRunnable;
     private WriteToServer wtsRunnable;
+    private int runCycleIndex = 0;
+    private int runCycleTimer = 0;
+    private boolean isJumping = true;
+    private double gravitationalPull = 0.1;
 
     public GameFrame(int w, int h) {
         width = w;
         height = h;
-        frame = new JFrame();
-        gameCanvas = new GameCanvas(w, h)
-        up = false;
-        down = false;
-        left = false;
-        right = false;
+        gameCanvas = new GameCanvas(w, h);
     }
 
     public void setUpGUI() {
-        Container contentPane = frame.getContentPane();
+        Container contentPane = this.getContentPane();
         contentPane.add(gameCanvas);
-        frame.setTitle("----- Player #" + playerID + " -----");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setTitle("----- Player #" + playerID + " -----");
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         contentPane.setPreferredSize(new Dimension(width, height));
         createSprites();
         dc = new DrawingComponent();
         contentPane.add(dc);
         this.pack();
         this.setVisible(true);
-        setUpKeyListener();
+        setUpKeyListener(contentPane);
         setUpAnimationTimer();
-
     }
 
     private void createSprites() {
         if (playerID == 1) {
-            me = new PlayerSprite(100, 400, 50, Color.BLUE);
-            enemy = new PlayerSprite(490, 400, 50, Color.RED);
+            me = new Player(50, 300);
+            partner = new Player(490, 500);
         } else {
-            enemy = new PlayerSprite(100, 400, 50, Color.BLUE);
-            me = new PlayerSprite(490, 400, 50, Color.RED);
+            partner = new Player(100, 500);
+            me = new Player(50, 300);
         }
     }
 
@@ -60,18 +57,30 @@ public class GameFrame extends JFrame {
         ActionListener al = new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 double speed = 5;
-                if (up) {
-                    me.moveV(-speed);
-                } 
-                if (down) {
-                    me.moveV(speed);
-                }
-                if (left) {
+                if (me.isAKeyDown()) {
                     me.moveH(-speed);
-                }
-                if (right) {
+                    runCycleTimer++;
+                    if (runCycleTimer >= 7) {
+                        runCycleIndex++;
+                        me.changeRunCycle(runCycleIndex);
+                        if (runCycleIndex >= 3) {
+                            runCycleIndex = 0;
+                        }
+                        runCycleTimer = 0;
+                    }
+                } else if (me.isSKeyDown()) {
                     me.moveH(speed);
+                    runCycleTimer++;
+                    if (runCycleTimer >= 7) {
+                        runCycleIndex++;
+                        me.changeRunCycle(runCycleIndex);
+                        if (runCycleIndex >= 3) {
+                            runCycleIndex = 0;
+                        }
+                        runCycleTimer = 0;
+                    }
                 }
+
                 dc.repaint();
             }
         };
@@ -79,7 +88,7 @@ public class GameFrame extends JFrame {
         animationTimer.start();
     }
 
-    private void setUpKeyListener() {
+    private void setUpKeyListener(Container contentPane) {
         KeyListener kl = new KeyListener() {
             public void keyTyped(KeyEvent ke) {
 
@@ -87,34 +96,33 @@ public class GameFrame extends JFrame {
             public void keyPressed(KeyEvent ke) {
                 int keyCode = ke.getKeyCode();
                 switch (keyCode) {
-                    case KeyEvent.VK_W:
-                        up = true;
+                    case KeyEvent.VK_A:
+                        me.setBind("a");
+                        me.setLastKeyPressed("a");
                         break;
                     case KeyEvent.VK_S:
-                        down = true;
+                        me.setBind("s");
+                        me.setLastKeyPressed("s");
                         break;
-                    case KeyEvent.VK_A:
-                        left = true;
-                        break;
-                    case KeyEvent.VK_D:
-                        right = true;
+                    case KeyEvent.VK_SPACE:
+                        me.setBind("space");
                         break;
                 }
             }
             public void keyReleased(KeyEvent ke) {
                 int keyCode = ke.getKeyCode();
                 switch (keyCode) {
-                    case KeyEvent.VK_W:
-                        up = false;
+                    case KeyEvent.VK_A:
+                        me.unbind("a");
+                        me.stopCycle();
                         break;
                     case KeyEvent.VK_S:
-                        down = false;
+                        me.unbind("s");
+                        me.stopCycle();
                         break;
-                    case KeyEvent.VK_A:
-                        left = false;
-                        break;
-                    case KeyEvent.VK_D:
-                        right = false;
+                    case KeyEvent.VK_SPACE:
+                        me.unbind("space");
+                        me.stopCycle();
                         break;
                 }
             }
@@ -130,7 +138,6 @@ public class GameFrame extends JFrame {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             playerID = in.readInt();
             System.out.println("You are player #" + playerID);
-            // Show the window as soon as we know player ID.
             setUpGUI();
             if (playerID == 1) {
                 System.out.println("Waiting for Player #2 to connect...");
@@ -146,8 +153,8 @@ public class GameFrame extends JFrame {
     private class DrawingComponent extends JComponent {
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
-            enemy.drawSprite(g2d);
-            me.drawSprite(g2d);
+            me.draw(g2d);
+            partner.draw(g2d);
         }
     }
 
@@ -161,9 +168,9 @@ public class GameFrame extends JFrame {
         public void run() {
             try {
                 while (true) {
-                    if (enemy != null) {
-                        enemy.setX(dataIn.readDouble());
-                        enemy.setY(dataIn.readDouble());
+                    if (partner != null) {
+                        partner.setX(dataIn.readDouble());
+                        partner.setY(dataIn.readDouble());
                     }
                 }
             } catch (IOException ex) {
@@ -214,8 +221,7 @@ public class GameFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        PlayerFrame pf = new PlayerFrame(640,480);
+        GameFrame pf = new GameFrame(640,480);
         pf.connectToServer();
-        pf.setUpGUI();
     }
 }
