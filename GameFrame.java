@@ -61,11 +61,11 @@ public class GameFrame extends JFrame {
 
     private void createSprites() {
         if (playerID == 1) {
-            me = new Player(50, floorHeight);
-            partner = new Player(130, floorHeight);
+            me = new Player(50, floorHeight, 1);
+            partner = new Player(130, floorHeight, 2);
         } else {
-            partner = new Player(130, floorHeight);
-            me = new Player(50, floorHeight);
+            partner = new Player(130, floorHeight, 1);
+            me = new Player(50, floorHeight, 2);
         }
     }
 
@@ -122,6 +122,16 @@ public class GameFrame extends JFrame {
                             shootCycleIndex = 0;
                             cycleType = 1;
                             me.changeCycle(cycleType, -1);
+                            bulletSync = true;
+                            bulletDirection = me.getDirection();
+                            if (bulletDirection == 0) {
+                                bulletX = (int) (me.getX() + 40);
+                                bulletY = (int) (me.getY() + 50);
+                            } else {
+                                bulletX = (int) (me.getX() - 40);
+                                bulletY = (int) (me.getY() + 50);
+                            }
+                            /** 
                             bulletDirections.add(me.getDirection());
                             bulletSync = true;
                             bulletDirection = me.getDirection();
@@ -133,11 +143,14 @@ public class GameFrame extends JFrame {
                                 bulletY = (int) (me.getY() + 50);
                             }
                             bullets.add(new Bullet(bulletX, bulletY));
+                            */
                             isShooting = false;
                         }
                         shootCycleTimer = 0;
                     } 
                 }
+
+                /** 
                 for (int i = bullets.size() - 1; i >= 0; i--) {
                     Bullet b = bullets.get(i);
                     int bDirect = bulletDirections.get(i);
@@ -151,6 +164,7 @@ public class GameFrame extends JFrame {
                         bulletDirections.remove(i);
                     }
                 }
+                */
                 dc.repaint();
             }
         };
@@ -233,7 +247,9 @@ public class GameFrame extends JFrame {
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             g2d.drawImage(Toolkit.getDefaultToolkit().getImage("bg/bg.png"), 0, 0, 1024, 768, null);
-            for (Bullet bullet : bullets) {
+            // https://www.javathinking.com/blog/remove-elements-from-collection-while-iterating/
+            ArrayList<Bullet> tempbullets2 = new ArrayList<>(bullets);
+            for (Bullet bullet : tempbullets2) {
                 bullet.draw(g2d);
             }
             me.draw(g2d);
@@ -266,6 +282,19 @@ public class GameFrame extends JFrame {
                             bulletDirections.add(tempBulletDirection);
                             bullets.add(new Bullet(tempBulletX, tempBulletY));
                             bulletSync = false;
+                        }
+                        for (int i = bullets.size() - 1; i >= 0; i--) {
+                            Bullet b = bullets.get(i);
+                            int bDirect = bulletDirections.get(i);
+                            if (bDirect == 0) {
+                                b.moveH(25);
+                            } else {
+                                b.moveH(-25);
+                            }
+                            if (b.getX() >= width || b.getX() <= 0) {
+                                bullets.remove(i);
+                                bulletDirections.remove(i);
+                            }
                         }
                     }
                 }
