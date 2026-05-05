@@ -15,6 +15,8 @@ public class Player implements DrawingObject {
     String last_key_pressed = "s";
     private ArrayList<Image> runCycleRight;
     private ArrayList<Image> runCycleLeft;
+    private ArrayList<Image> shootCycleRight;
+    private ArrayList<Image> shootCycleLeft;
     private int currentIndex = 0;
     private int direction = 1;
 
@@ -24,14 +26,22 @@ public class Player implements DrawingObject {
         image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/s-1-p-r.png");
         runCycleRight = new ArrayList<Image>();
         runCycleLeft = new ArrayList<Image>();
-        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/right/wc-1-p.png"));
-        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/right/wc-2-p.png"));
-        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/right/wc-3-p.png"));
-        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/right/wc-4-p.png"));
-        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-1-p.png"));
-        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-2-p.png"));
-        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-3-p.png"));
-        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run-cycle/pixelated/left/wc-4-p.png"));
+        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/right/run-r-1.png"));
+        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/right/run-r-2.png"));
+        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/right/run-r-3.png"));
+        runCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/right/run-r-4.png"));
+        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/left/run-l-1.png"));
+        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/left/run-l-2.png"));
+        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/left/run-l-3.png"));
+        runCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/run/left/run-l-4.png"));
+        shootCycleLeft = new ArrayList<Image>();
+        shootCycleRight = new ArrayList<Image>();
+        shootCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/shoot/left/gs-l-1.png"));
+        shootCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/shoot/left/gs-l-2.png")); 
+        shootCycleLeft.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/shoot/left/gs-l-3.png"));
+        shootCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/shoot/right/gs-r-1.png"));
+        shootCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/shoot/right/gs-r-2.png"));
+        shootCycleRight.add(Toolkit.getDefaultToolkit().getImage("sprites/malloy/shoot/right/gs-r-3.png"));
         healthbar = new Healthbar((int) x, (int) (y-30));
     }
 
@@ -44,7 +54,7 @@ public class Player implements DrawingObject {
     }
 
     public void draw(Graphics2D g2d) {
-        g2d.drawImage(image, (int) x - 36, (int) y, 120, 120, null);
+        g2d.drawImage(image, (int) x - 36, (int) y, 200, 150, null);
         healthbar.draw(g2d);
     }
 
@@ -116,11 +126,20 @@ public class Player implements DrawingObject {
         }
     }
 
+    public void changeShootCycle(int index) {
+        currentIndex = index;
+        if (last_key_pressed.equals("a")) {
+            image = shootCycleLeft.get(index);
+        } else if (last_key_pressed.equals("s")) {
+            image = shootCycleRight.get(index);
+        }
+    }
+
     public void stopCycle() {
         if (last_key_pressed.equals("a")) {
-            image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/s-1-p-l.png");
+            image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/standing/s-l.png");
         } else if (last_key_pressed.equals("s")) {
-            image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/s-1-p-r.png");
+            image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/standing/s-r.png");
         }
     }
 
@@ -140,6 +159,14 @@ public class Player implements DrawingObject {
 
     public void setDirection(int d) {
         direction = d;
+    }
+
+    public void setJump() {
+        if (getDirection() == 0) {
+            image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/jump/jump-r.png");
+        } else if (getDirection() == 1) {
+            image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/jump/jump-l.png");
+        }
     }
 
 }

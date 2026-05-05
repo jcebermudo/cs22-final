@@ -22,7 +22,10 @@ public class GameFrame extends JFrame {
     private boolean isJumping = false;
     private double gravitationalPull = 1;
     private double newSpeed = 0;
-    private int floorHeight = 330;
+    private int floorHeight = 570;
+    private boolean isShooting = false;
+    private int shootCycleIndex = 0;
+    private int shootCycleTimer = 0;
 
     public GameFrame(int w, int h) {
         width = w;
@@ -63,7 +66,7 @@ public class GameFrame extends JFrame {
                 if (me.isAKeyDown()) {
                     me.moveH(-speed);
                     runCycleTimer++;
-                    if (runCycleTimer >= 7) {
+                    if (runCycleTimer >= 6) {
                         runCycleIndex++;
                         me.changeRunCycle(runCycleIndex);
                         if (runCycleIndex >= 3) {
@@ -86,10 +89,25 @@ public class GameFrame extends JFrame {
                 if (isJumping) {
                     newSpeed -= gravitationalPull;
                     me.moveV(-newSpeed);
+                    me.setJump();
                     if (me.getY() >= floorHeight) {
                         me.setY(floorHeight);
-                        isJumping = false;
                         newSpeed = 0;
+                        me.stopCycle();
+                        isJumping = false;
+                    }
+                }
+                if (isShooting && !isJumping) {
+                    shootCycleTimer++;
+                    if (shootCycleTimer >= 5) {
+                        me.changeShootCycle(shootCycleIndex);
+                        shootCycleIndex++;
+                        if (shootCycleIndex >= 3) {
+                            shootCycleIndex = 0;
+                            me.stopCycle();
+                            isShooting = false;
+                        }
+                        shootCycleTimer = 0;
                     }
                 }
                 dc.repaint();
@@ -122,6 +140,10 @@ public class GameFrame extends JFrame {
                             newSpeed = 23.5;
                         }
                         break;
+                    case KeyEvent.VK_Q:
+                        isShooting = true;
+                        me.setBind("q");
+                        break;
                 }
             }
             public void keyReleased(KeyEvent ke) {
@@ -137,7 +159,6 @@ public class GameFrame extends JFrame {
                         break;
                     case KeyEvent.VK_SPACE:
                         me.unbind("space");
-                        me.stopCycle();
                         break;
                 }
             }
@@ -168,7 +189,7 @@ public class GameFrame extends JFrame {
     private class DrawingComponent extends JComponent {
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
-            g2d.drawImage(Toolkit.getDefaultToolkit().getImage("bg/bg.png"), 0, 0, 640, 480, null);
+            g2d.drawImage(Toolkit.getDefaultToolkit().getImage("bg/bg.png"), 0, 0, 1024, 768, null);
             me.draw(g2d);
             partner.draw(g2d);
         }
@@ -241,7 +262,7 @@ public class GameFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        GameFrame pf = new GameFrame(640,480);
+        GameFrame pf = new GameFrame(1024,768);
         pf.connectToServer();
     }
 }
