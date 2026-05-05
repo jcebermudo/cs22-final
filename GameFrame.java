@@ -18,6 +18,7 @@ public class GameFrame extends JFrame {
     private int playerID;
     private ReadFromServer rfsRunnable;
     private WriteToServer wtsRunnable;
+    private int cycleType = 1;
     private int runCycleIndex = 0;
     private int runCycleTimer = 0;
     private boolean isJumping = false;
@@ -30,6 +31,12 @@ public class GameFrame extends JFrame {
     private ArrayList<Bullet> bullets = new ArrayList<Bullet>();
     private ArrayList<Integer> bulletDirections = new ArrayList<Integer>();
     private int bulletDirection = 1; // 0 is left, 1 is right
+    private int tempCurrentIndex = 0;
+
+    // bullet pass (network sync)
+    private boolean bulletSync = false;
+    private int bulletX = 0;
+    private int bulletY = 0;
 
     public GameFrame(int w, int h) {
         width = w;
@@ -68,22 +75,24 @@ public class GameFrame extends JFrame {
             public void actionPerformed(ActionEvent ae) {
                 double speed = 5;
                 if (me.isAKeyDown()) {
+                    cycleType = 4;
                     me.moveH(-speed);
                     runCycleTimer++;
                     if (runCycleTimer >= 6) {
                         runCycleIndex++;
-                        me.changeRunCycle(runCycleIndex);
+                        me.changeCycle(cycleType, runCycleIndex);
                         if (runCycleIndex >= 3) {
                             runCycleIndex = 0;
                         }
                         runCycleTimer = 0;
                     }
                 } else if (me.isSKeyDown()) {
+                    cycleType = 4;
                     me.moveH(speed);
                     runCycleTimer++;
                     if (runCycleTimer >= 7) {
                         runCycleIndex++;
-                        me.changeRunCycle(runCycleIndex);
+                        me.changeCycle(cycleType, runCycleIndex);
                         if (runCycleIndex >= 3) {
                             runCycleIndex = 0;
                         }
@@ -91,30 +100,39 @@ public class GameFrame extends JFrame {
                     }
                 }
                 if (isJumping) {
+                    cycleType = 2;
                     newSpeed -= gravitationalPull;
                     me.moveV(-newSpeed);
-                    me.setJump();
+                    me.changeCycle(cycleType, -1);
                     if (me.getY() >= floorHeight) {
                         me.setY(floorHeight);
                         newSpeed = 0;
-                        me.stopCycle();
+                        cycleType = 1;
+                        me.changeCycle(cycleType, -1);
                         isJumping = false;
                     }
                 }
                 if (isShooting) {
                     shootCycleTimer++;
                     if (shootCycleTimer >= 5) {
-                        me.changeShootCycle(shootCycleIndex);
+                        cycleType = 3;
+                        me.changeCycle(cycleType, shootCycleIndex);
                         shootCycleIndex++;
                         if (shootCycleIndex >= 3) {
                             shootCycleIndex = 0;
-                            me.stopCycle();
+                            cycleType = 1;
+                            me.changeCycle(cycleType, -1);
                             bulletDirections.add(me.getDirection());
-                            if (me.getDirection() == 0) {
-                                bullets.add(new Bullet(me.getX() + 40, me.getY() + 50));
+                            bulletSync = true;
+                            bulletDirection = me.getDirection();
+                            if (bulletDirection == 0) {
+                                bulletX = (int) (me.getX() + 40);
+                                bulletY = (int) (me.getY() + 50);
                             } else {
-                                bullets.add(new Bullet(me.getX() - 40, me.getY() + 50));
+                                bulletX = (int) (me.getX() - 40);
+                                bulletY = (int) (me.getY() + 50);
                             }
+                            bullets.add(new Bullet(bulletX, bulletY));
                             isShooting = false;
                         }
                         shootCycleTimer = 0;
@@ -174,11 +192,13 @@ public class GameFrame extends JFrame {
                 switch (keyCode) {
                     case KeyEvent.VK_A:
                         me.unbind("a");
-                        me.stopCycle();
+                        cycleType = 1;
+                        me.changeCycle(cycleType, -1);
                         break;
                     case KeyEvent.VK_S:
                         me.unbind("s");
-                        me.stopCycle();
+                        cycleType = 1;
+                        me.changeCycle(cycleType, -1);
                         break;
                     case KeyEvent.VK_SPACE:
                         me.unbind("space");
@@ -234,8 +254,19 @@ public class GameFrame extends JFrame {
                     if (partner != null) {
                         partner.setX(dataIn.readDouble());
                         partner.setY(dataIn.readDouble());
-                        partner.changeRunCycle(dataIn.readInt());
                         partner.setDirection(dataIn.readInt());
+                        int tempCycleType = dataIn.readInt();
+                        int tempInnerIndex = dataIn.readInt();
+                        partner.changeCycle(tempCycleType, tempInnerIndex);
+                        boolean tempBulletSync = dataIn.readBoolean();
+                        int tempBulletX = dataIn.readInt();
+                        int tempBulletY = dataIn.readInt();
+                        int tempBulletDirection = dataIn.readInt();
+                        if (tempBulletSync) {
+                            bulletDirections.add(tempBulletDirection);
+                            bullets.add(new Bullet(tempBulletX, tempBulletY));
+                            bulletSync = false;
+                        }
                     }
                 }
             } catch (IOException ex) {
@@ -270,8 +301,21 @@ public class GameFrame extends JFrame {
                     if (me != null) {
                     dataOut.writeDouble(me.getX());
                     dataOut.writeDouble(me.getY());
-                    dataOut.writeInt(me.getCurrentIndex());
                     dataOut.writeInt(me.getDirection());
+                    dataOut.writeInt(cycleType);
+                    if (cycleType == 1) {
+                        dataOut.writeInt(-1);
+                    } else if (cycleType == 2) {
+                        dataOut.writeInt(-1);
+                    } else if (cycleType == 3) {
+                        dataOut.writeInt(shootCycleIndex);
+                    } else {
+                        dataOut.writeInt(runCycleIndex);
+                    }
+                    dataOut.writeBoolean(bulletSync);
+                    dataOut.writeInt(bulletX);
+                    dataOut.writeInt(bulletY);
+                    dataOut.writeInt(bulletDirection);
                     dataOut.flush();
                     }
                     try {

@@ -117,17 +117,22 @@ public class Player implements DrawingObject {
         last_key_pressed = key;
     }
 
-    public void changeRunCycle(int index) {
-        currentIndex = index;
+    public void changeCycle(int index, int innerIndex) {
+        if (index == 1) {
+            stopCycle();
+        } else if (index == 2) {
+            setJump();
+        } else if (index == 3) {
+            changeShootCycle(innerIndex);
+        } else {
         if (last_key_pressed.equals("a")) {
-            image = runCycleLeft.get(index);
+            image = runCycleLeft.get(innerIndex);
         } else if (last_key_pressed.equals("s")) {
-            image = runCycleRight.get(index);
-        }
+            image = runCycleRight.get(innerIndex);
+        }}
     }
 
     public void changeShootCycle(int index) {
-        currentIndex = index;
         if (last_key_pressed.equals("a")) {
             image = shootCycleLeft.get(index);
         } else if (last_key_pressed.equals("s")) {
@@ -159,12 +164,17 @@ public class Player implements DrawingObject {
 
     public void setDirection(int d) {
         direction = d;
+        if (direction == 0) {
+            last_key_pressed = "s";
+        } else if (direction == 1) {
+            last_key_pressed = "a";
+        }
     }
 
     public void setJump() {
-        if (getDirection() == 0) {
+        if (last_key_pressed.equals("s")) {
             image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/jump/jump-r.png");
-        } else if (getDirection() == 1) {
+        } else if (last_key_pressed.equals("a")) {
             image = Toolkit.getDefaultToolkit().getImage("sprites/malloy/jump/jump-l.png");
         }
     }

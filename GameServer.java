@@ -15,8 +15,15 @@ public class GameServer {
     private WriteToClient p2WriteRunnable;
 
     private double p1x, p1y, p2x, p2y;
-    private int p1CurrentRunCycleIndex, p2CurrentRunCycleIndex;
+    private int p1InnerIndex, p2InnerIndex;
     private int p1Direction, p2Direction;
+    private int p1CycleType, p2CycleType;
+
+    // bullet pass
+    private boolean bulletSync = false;
+    private int bulletX = 0;
+    private int bulletY = 0;
+    private int bulletDirection = 1;
 
     public GameServer() {
         System.out.println("=== GAME SERVER ===");
@@ -28,8 +35,10 @@ public class GameServer {
         p2x = 130;
         p2y = 330;
 
-        p1CurrentRunCycleIndex = 0;
-        p2CurrentRunCycleIndex = 0;
+        p1InnerIndex = -1;
+        p2InnerIndex = -1;
+        p1CycleType = 1;
+        p2CycleType = 1;
 
         try {
             ss = new ServerSocket(1000);
@@ -97,13 +106,23 @@ public class GameServer {
                     if(playerID == 1) {
                         p1x = dataIn.readDouble();
                         p1y = dataIn.readDouble();
-                        p1CurrentRunCycleIndex = dataIn.readInt();
                         p1Direction = dataIn.readInt();
+                        p1CycleType = dataIn.readInt();
+                        p1InnerIndex = dataIn.readInt();
+                        bulletSync = dataIn.readBoolean();
+                        bulletX = dataIn.readInt();
+                        bulletY = dataIn.readInt();
+                        bulletDirection = dataIn.readInt();
                     } else {
                         p2x = dataIn.readDouble();
                         p2y = dataIn.readDouble();
-                        p2CurrentRunCycleIndex = dataIn.readInt();
                         p2Direction = dataIn.readInt();
+                        p2CycleType = dataIn.readInt();
+                        p2InnerIndex = dataIn.readInt();
+                        bulletSync = dataIn.readBoolean();
+                        bulletX = dataIn.readInt();
+                        bulletY = dataIn.readInt();
+                        bulletDirection = dataIn.readInt();
                     }
                 }
             } catch (IOException ex) {
@@ -128,13 +147,23 @@ public class GameServer {
                     if (playerID == 1) {
                         dataOut.writeDouble(p2x);
                         dataOut.writeDouble(p2y);
-                        dataOut.writeInt(p2CurrentRunCycleIndex);
                         dataOut.writeInt(p2Direction);
+                        dataOut.writeInt(p2CycleType);
+                        dataOut.writeInt(p2InnerIndex);
+                        dataOut.writeBoolean(bulletSync);
+                        dataOut.writeInt(bulletX);
+                        dataOut.writeInt(bulletY);
+                        dataOut.writeInt(bulletDirection);
                     } else {
                         dataOut.writeDouble(p1x);
                         dataOut.writeDouble(p1y);
-                        dataOut.writeInt(p1CurrentRunCycleIndex);
                         dataOut.writeInt(p1Direction);
+                        dataOut.writeInt(p1CycleType);
+                        dataOut.writeInt(p1InnerIndex);
+                        dataOut.writeBoolean(bulletSync);
+                        dataOut.writeInt(bulletX);
+                        dataOut.writeInt(bulletY);
+                        dataOut.writeInt(bulletDirection);
                     }
                     dataOut.flush();
                     try {
