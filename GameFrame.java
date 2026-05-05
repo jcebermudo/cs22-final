@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.imageio.ImageIO;
+import java.util.ArrayList;
 
 public class GameFrame extends JFrame {
     private int width, height;
@@ -26,6 +27,9 @@ public class GameFrame extends JFrame {
     private boolean isShooting = false;
     private int shootCycleIndex = 0;
     private int shootCycleTimer = 0;
+    private ArrayList<Bullet> bullets = new ArrayList<Bullet>();
+    private ArrayList<Integer> bulletDirections = new ArrayList<Integer>();
+    private int bulletDirection = 1; // 0 is left, 1 is right
 
     public GameFrame(int w, int h) {
         width = w;
@@ -97,7 +101,7 @@ public class GameFrame extends JFrame {
                         isJumping = false;
                     }
                 }
-                if (isShooting && !isJumping) {
+                if (isShooting) {
                     shootCycleTimer++;
                     if (shootCycleTimer >= 5) {
                         me.changeShootCycle(shootCycleIndex);
@@ -105,9 +109,28 @@ public class GameFrame extends JFrame {
                         if (shootCycleIndex >= 3) {
                             shootCycleIndex = 0;
                             me.stopCycle();
+                            bulletDirections.add(me.getDirection());
+                            if (me.getDirection() == 0) {
+                                bullets.add(new Bullet(me.getX() + 40, me.getY() + 50));
+                            } else {
+                                bullets.add(new Bullet(me.getX() - 40, me.getY() + 50));
+                            }
                             isShooting = false;
                         }
                         shootCycleTimer = 0;
+                    } 
+                }
+                for (int i = bullets.size() - 1; i >= 0; i--) {
+                    Bullet b = bullets.get(i);
+                    int bDirect = bulletDirections.get(i);
+                    if (bDirect == 0) {
+                        b.moveH(25);
+                    } else {
+                        b.moveH(-25);
+                    }
+                    if (b.getX() >= width || b.getX() <= 0) {
+                        bullets.remove(i);
+                        bulletDirections.remove(i);
                     }
                 }
                 dc.repaint();
@@ -190,6 +213,9 @@ public class GameFrame extends JFrame {
         protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             g2d.drawImage(Toolkit.getDefaultToolkit().getImage("bg/bg.png"), 0, 0, 1024, 768, null);
+            for (Bullet bullet : bullets) {
+                bullet.draw(g2d);
+            }
             me.draw(g2d);
             partner.draw(g2d);
         }
